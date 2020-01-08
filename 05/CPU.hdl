@@ -40,4 +40,49 @@ CHIP CPU {
 
     PARTS:
     // Put your code here:
+    //rename
+    Or16(a=false,b=instruction,out[15]=isC,out[14]=true,out[13]=true,out[12]=aa,out[11]=c1,out[10]=c2,out[9]=c3,out[8]=c4,out[7]=c5,out[6]=c6,out[5]=d1,out[4]=d2,out[3]=d3,out[2]=j1,out[1]=j2,out[0]=j3);
+
+    //A register
+    //c1
+    Mux16(a=instruction,b=aluout,sel=isC,out=CorA);
+
+    //c2
+    Not(in=isC,out=isA);
+    And(a=isC,b=d1,out=andisCd1);
+    Or(a=isA,b=andisCd1,out=cc2);
+    ARegister(in=CorA,load=cc2,out=Areg,out[0..14]=addressM);
+
+    //c3
+    //sel A or D register
+    Mux16(a=Areg,b=inM,sel=aa,out=muxAM);
+
+    //c4
+    //zr="=",ng="<",ng,zr>(PO=ng'&zr',ng=">",zr="><")
+    Not(in=ng,out=notng);
+    Not(in=zr,out=notzr);
+    And(a=notng,b=notzr,out=PO);
+
+    //j1=ng,j2=zr,j3=PO,JMP
+    And(a=j1,b=ng,out=out1);
+    And(a=j2,b=zr,out=out2);
+    And(a=j3,b=PO,out=out3);
+    Or(a=out1,b=out2,out=out4);
+    Or(a=out3,b=out4,out=jnj);
+
+    //A D register --> isC
+    And(a=isC, b=jnj, out=PCload);
+    PC(in=Areg,load=PCload,inc=true,reset=reset,out[0..14]=pc);
+
+    //c5,c8
+    ALU(x=Dreg,y=muxAM,zx=c1,nx=c2,zy=c3,ny=c4,f=c5,no=c6,out=aluout,out=outM,zr=zr,ng=ng);
+
+
+    //c6
+    And(a=isC,b=d2,out=Dload);
+    DRegister(in=aluout,load=Dload,out=Dreg);
+
+
+    //c7:writeM
+    And(a=isC,b=d3,out=writeM);
 }
